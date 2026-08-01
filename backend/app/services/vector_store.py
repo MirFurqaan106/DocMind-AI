@@ -37,10 +37,16 @@ class VectorStoreManager:
         if self._embeddings is None:
             google_key = os.getenv("GOOGLE_API_KEY") or settings.GOOGLE_API_KEY
             if google_key and not google_key.startswith("your-"):
-                self._embeddings = GoogleGenerativeAIEmbeddings(
-                    model="models/text-embedding-004",
-                    google_api_key=google_key
-                )
+                try:
+                    self._embeddings = GoogleGenerativeAIEmbeddings(
+                        model="models/gemini-embedding-001",
+                        google_api_key=google_key
+                    )
+                except Exception:
+                    self._embeddings = GoogleGenerativeAIEmbeddings(
+                        model="models/gemini-embedding-2",
+                        google_api_key=google_key
+                    )
             elif HuggingFaceEmbeddings is not None:
                 self._embeddings = HuggingFaceEmbeddings(
                     model_name=settings.EMBEDDING_MODEL_NAME,
@@ -50,6 +56,7 @@ class VectorStoreManager:
             else:
                 raise ValueError("No valid embedding model available. Please configure GOOGLE_API_KEY.")
         return self._embeddings
+
 
 
     @property
