@@ -1,8 +1,10 @@
 import os
 import chromadb
 from typing import List
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_community.embeddings import HuggingFaceEmbeddings
+try:
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+except ImportError:
+    HuggingFaceEmbeddings = None
 
 try:
     from langchain_chroma import Chroma
@@ -31,24 +33,20 @@ class VectorStoreManager:
         if self._embeddings is None:
             google_key = os.getenv("GOOGLE_API_KEY") or settings.GOOGLE_API_KEY
             if google_key and not google_key.startswith("your-"):
-                try:
-                    self._embeddings = GoogleGenerativeAIEmbeddings(
-                        model="models/text-embedding-004",
-                        google_api_key=google_key
-                    )
-                except Exception:
-                    self._embeddings = HuggingFaceEmbeddings(
-                        model_name=settings.EMBEDDING_MODEL_NAME,
-                        model_kwargs={'device': 'cpu'},
-                        encode_kwargs={'normalize_embeddings': True}
-                    )
-            else:
+                self._embeddings = GoogleGenerativeAIEmbeddings(
+                    model="models/text-embedding-004",
+                    google_api_key=google_key
+                )
+            elif HuggingFaceEmbeddings is not None:
                 self._embeddings = HuggingFaceEmbeddings(
                     model_name=settings.EMBEDDING_MODEL_NAME,
                     model_kwargs={'device': 'cpu'},
                     encode_kwargs={'normalize_embeddings': True}
                 )
+            else:
+                raise ValueError("No valid embedding model available. Please configure GOOGLE_API_KEY.")
         return self._embeddings
+
 
     @property
     def vector_store(self):
