@@ -1,7 +1,14 @@
-from typing import List
+import os
 import chromadb
+from typing import List
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+
+try:
+    from langchain_chroma import Chroma
+except ImportError:
+    from langchain_community.vectorstores import Chroma
+
 try:
     from langchain_core.documents import Document as LangChainDocument
 except ImportError:
@@ -11,52 +18,66 @@ from app.core.config import settings
 
 class VectorStoreManager:
     """
-    Manages ChromaDB persistent vector database and SentenceTransformers embedding model.
+    Manages ChromaDB persistent vector database with dynamic lightweight embeddings.
+    Lazy-loads embedding model to prevent memory overhead during server startup.
     """
     def __init__(self):
-        # Initialize SentenceTransformers embeddings locally
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=settings.EMBEDDING_MODEL_NAME,
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
-        )
-        # Persistent ChromaDB client
-        self.chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
-        
-        # LangChain Chroma wrapper around collection
-        self.vector_store = Chroma(
-            client=self.chroma_client,
-            collection_name="docmind_chunks",
-            embedding_function=self.embeddings
-        )
+        self._embeddings = None
+        self._vector_store = None
+        self.chroma_client = None
+
+    @property
+    def embeddings(self):
+        if self._embeddings is None:
+            google_key = os.getenv("GOOGLE_API_KEY") or settings.GOOGLE_API_KEY
+            if google_key and not google_key.startswith("your-"):
+                try:
+                    self._embeddings = GoogleGenerativeAIEmbeddings(
+                        model="models/text-embedding-004",
+                        google_api_key=google_key
+                    )
+                except Exception:
+                    self._embeddings = HuggingFaceEmbeddings(
+                        model_name=settings.EMBEDDING_MODEL_NAME,
+                        model_kwargs={'device': 'cpu'},
+                        encode_kwargs={'normalize_embeddings': True}
+                    )
+            else:
+                self._embeddings = HuggingFaceEmbeddings(
+                    model_name=settings.EMBEDDING_MODEL_NAME,
+                    model_kwargs={'device': 'cpu'},
+                    encode_kwargs={'normalize_embeddings': True}
+                )
+        return self._embeddings
+
+    @property
+    def vector_store(self):
+        if self._vector_store is None:
+            if self.chroma_client is None:
+                self.chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
+            self._vector_store = Chroma(
+                client=self.chroma_client,
+                collection_name="docmind_chunks",
+                embedding_function=self.embeddings
+            )
+        return self._vector_store
 
     def add_documents(self, documents: List[LangChainDocument]) -> List[str]:
-        """
-        Generates embeddings for document chunks and stores them in ChromaDB.
-        """
         if not documents:
             return []
-        ids = self.vector_store.add_documents(documents)
-        return ids
+        return self.vector_store.add_documents(documents)
 
     def search_similar_chunks(self, query: str, user_id: int, top_k: int = 4) -> List[LangChainDocument]:
-        """
-        Performs similarity search in ChromaDB filtered by user_id.
-        """
-        # Filter chunks by current user to enforce tenant isolation
         search_filter = {"user_id": user_id}
-        
-        results = self.vector_store.similarity_search(
+        return self.vector_store.similarity_search(
             query=query,
             k=top_k,
             filter=search_filter
         )
-        return results
 
     def delete_document_vectors(self, document_id: int, user_id: int):
-        """
-        Removes all vector embeddings associated with a deleted document.
-        """
+        if self.chroma_client is None:
+            self.chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DB_DIR)
         collection = self.chroma_client.get_or_create_collection("docmind_chunks")
         collection.delete(
             where={
