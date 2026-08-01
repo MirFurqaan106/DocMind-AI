@@ -5,7 +5,11 @@ let rawUrl = (import.meta as any).env?.VITE_API_URL || '/api/v1';
 if (rawUrl.endsWith('/')) {
   rawUrl = rawUrl.slice(0, -1);
 }
+if (!rawUrl.endsWith('/api/v1')) {
+  rawUrl = `${rawUrl}/api/v1`;
+}
 const API_BASE_URL = rawUrl;
+
 
 
 
