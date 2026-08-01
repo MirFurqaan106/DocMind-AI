@@ -18,22 +18,15 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Enable CORS for React frontend (Vercel production domains & local dev)
+# Enable universal CORS for React frontend (Vercel production & local dev)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://doc-mind-ai-pi.vercel.app",
-        "https://doc-mind-ai.vercel.app",
-    ],
-    allow_origin_regex=r".*",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 
