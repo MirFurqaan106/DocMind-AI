@@ -1,14 +1,11 @@
 import os
 import chromadb
 from typing import List
-
-try:
-    from langchain_google_genai import GoogleGenerativeAIEmbeddings
-except ImportError:
-    GoogleGenerativeAIEmbeddings = None
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 try:
     from langchain_community.embeddings import HuggingFaceEmbeddings
+
 
 except ImportError:
     HuggingFaceEmbeddings = None
