@@ -11,8 +11,9 @@ export interface AuthToken {
 
 export interface DocumentItem {
   id: number;
-  filename: str;
+  filename: string;
   file_size: number;
+
   chunk_count: number;
   upload_date: string;
 }

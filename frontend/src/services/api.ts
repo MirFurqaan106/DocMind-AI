@@ -42,14 +42,15 @@ api.interceptors.response.use(
 
 // API Service Methods
 export const authAPI = {
-  signup: async (data: { email: string; password: str }): Promise<User> => {
+  signup: async (data: { email: string; password: string }): Promise<User> => {
     const res = await api.post<User>('/auth/signup', data);
     return res.data;
   },
-  login: async (data: { email: string; password: str }): Promise<AuthToken> => {
+  login: async (data: { email: string; password: string }): Promise<AuthToken> => {
     const res = await api.post<AuthToken>('/auth/login', data);
     return res.data;
   },
+
   getMe: async (): Promise<User> => {
     const res = await api.get<User>('/auth/me');
     return res.data;
