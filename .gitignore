@@ -1,0 +1,33 @@
+# Python / Virtual Environment
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ENV/
+
+# Database & Storage (Keep directory structures clean)
+database/*.db
+database/*.db-journal
+database/chroma/
+uploads/*
+!uploads/.gitkeep
+
+# Environment variables
+.env
+*.env.local
+
+# Node / React Frontend
+node_modules/
+dist/
+build/
+.output/
+.vite/
+*.log
+
+# IDE & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
