@@ -29,11 +29,12 @@ app.add_middleware(
         "https://doc-mind-ai-pi.vercel.app",
         "https://doc-mind-ai.vercel.app",
     ],
-    allow_origin_regex=r"https://.*\.vercel\.app|http://(localhost|127\.0\.0\.1)(:[0-9]+)?",
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 

@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { AuthToken, User, DocumentItem, ChatMessage, UserSettings } from '../types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api/v1';
+let rawUrl = (import.meta as any).env?.VITE_API_URL || '/api/v1';
+if (rawUrl.endsWith('/')) {
+  rawUrl = rawUrl.slice(0, -1);
+}
+const API_BASE_URL = rawUrl;
+
 
 
 
